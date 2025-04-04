@@ -8,10 +8,22 @@
 import SwiftUI
 
 public struct WaveShape: Shape {
-    let amplitude: CGFloat
-    let waveLength: CGFloat
-    let waterLevel: CGFloat
+    private let amplitude: CGFloat
+    private let waveLength: CGFloat
+    private let waterLevel: CGFloat
     private(set) var phase: CGFloat = 0.0
+
+    public init(
+        amplitude: CGFloat,
+        waveLength: CGFloat,
+        waterLevel: CGFloat,
+        phase: CGFloat = 0.0
+    ) {
+        self.amplitude = amplitude
+        self.waveLength = waveLength
+        self.waterLevel = waterLevel
+        self.phase = phase
+    }
 
     public var animatableData: Double {
         get { phase }
@@ -43,7 +55,5 @@ public struct WaveShape: Shape {
 
 #Preview {
     WaveShape(amplitude: 10, waveLength: 0.1, waterLevel: 0.5)
-        .border(.red)
-//        .fill(LinearGradient(gradient: .coralSunsetGradient, startPoint: .top, endPoint: .bottom))
         .ignoresSafeArea()
 }
