@@ -13,7 +13,8 @@ struct WaveDemoView: View {
     @State private var waveAmplitude: CGFloat = 10.0
     @State private var animationDuration: CGFloat = 1.0
     @State private var waveLength: CGFloat = 0.25
-    @State private var waterLevel: CGFloat = 0.80
+    @State private var waterLevel: CGFloat = 0.50
+    @State private var rotation: CGFloat = 0.0
     @State private var distance: Int = 1
     @State private var animationBehavior: WaveView.AnimationBahaviour = .continuous(duration: 1.0)
 
@@ -34,6 +35,7 @@ struct WaveDemoView: View {
                 waveLength: waveLength,
                 waterLevel: waterLevel,
                 animationBehaviour: backgroundWaveAnimationBehavior,
+                rotation: rotation,
                 startPhase: 0.5
             )
             .id(id)
@@ -45,7 +47,8 @@ struct WaveDemoView: View {
                 amplitude: waveAmplitude,
                 waveLength: waveLength,
                 waterLevel: waterLevel,
-                animationBehaviour: animationBehavior
+                animationBehaviour: animationBehavior,
+                rotation: rotation
             )
             .id(id)
             .foregroundStyle(
@@ -91,6 +94,14 @@ struct WaveDemoView: View {
                         in: 0.0...1.0,
                         label: { EmptyView() },
                         minimumValueLabel: { Text("0,0") },
+                        maximumValueLabel: { Text("1,0")}
+                    )
+                    Text("Rotation: \(rotation, specifier: "%.2F")")
+                    Slider(
+                        value: $rotation,
+                        in: -1.0...1.0,
+                        label: { EmptyView() },
+                        minimumValueLabel: { Text("-1,0") },
                         maximumValueLabel: { Text("1,0")}
                     )
                     Text("Animation behavior")

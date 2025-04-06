@@ -45,6 +45,7 @@ public struct WaveView: View {
     let waveLength: Double
     let waterLevel: Double
     let animationBehaviour: AnimationBahaviour
+    let rotation: Double
     private let startPhase: Double
     @State private var phase: Double
 
@@ -53,12 +54,14 @@ public struct WaveView: View {
         waveLength: Double,
         waterLevel: Double = 0.5,
         animationBehaviour: AnimationBahaviour = .backAndForth(duration: 2.5),
+        rotation: Double = 0.0,
         startPhase: Double = 1
     ) {
         self.amplitude = amplitude
         self.waveLength = waveLength
         self.waterLevel = waterLevel
         self.animationBehaviour = animationBehaviour
+        self.rotation = rotation
         self.startPhase = startPhase * .pi
         self.phase = startPhase * .pi
     }
@@ -68,12 +71,13 @@ public struct WaveView: View {
             amplitude: amplitude,
             waveLength: waveLength,
             waterLevel: waterLevel,
-            phase: phase
+            phase: phase,
+            rotation: rotation
         )
-        .onAppear(perform: self.updateAnimation)
+        .onAppear(perform: self.startAnimation)
     }
 
-    private func updateAnimation() {
+    private func startAnimation() {
         guard let animation = self.animationBehaviour.animation else {
             return
         }
@@ -88,5 +92,11 @@ public struct WaveView: View {
 
 @available(iOS 17.0, *)
 #Preview {
-    WaveView(amplitude: 50, waveLength: 0.5, waterLevel: 0.5, animationBehaviour: .none, startPhase: 1)
+    WaveView(
+        amplitude: 50,
+        waveLength: 0.5,
+        waterLevel: 0.5,
+        animationBehaviour: .continuous(duration: 1.0),
+        startPhase: 1
+    )
 }
