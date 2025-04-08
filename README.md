@@ -25,6 +25,8 @@ import OpenSeasUI
 
 ## Examples
 
+> Refer to the [included WaveDemoView](./Sources/OpenSeasUI/Demo/WaveDemoView.swift) for a complete example of all capabilities
+
 #### Simple Wave View
 To add an animated wave view to any SwiftUI view, add `WaveView` with the parameters that best match your needs:
 
