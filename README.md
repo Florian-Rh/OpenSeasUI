@@ -1,6 +1,6 @@
 #  OpenSeasUI
 
-OpenSeasUI is a Swift Package that contains animated views aimed at mimicing the behavior of water. It can be used in blue market applications to create engaging and beautiful UIs, or to visually convey maritime weather information like wave behavior.
+OpenSeasUI is a Swift Package that contains animated views aimed at mimicing the behavior of water. It can be used in iOS Apps (other Apple Platforms are on the roadmap) to create engaging and beautiful UIs, or to visually convey maritime weather information like wave behavior.
 
 ## How to include this Swift Package
 
@@ -25,6 +25,7 @@ import OpenSeasUI
 
 ## Examples
 
+#### Simple Wave View
 To add an animated wave view to any SwiftUI view, add `WaveView` with the parameters that best match your needs:
 
 ```
@@ -38,7 +39,9 @@ struct SimpleWaveDemoView: View {
     }
 }
 ```
-By default, the water line will appear in the center of the surrounding view. The default animation will move the waves back and forth by two waves over a period of 2.5 seconds.
+
+#### Changing animation style and height
+By default, the water line will appear in the center of the view. The default animation will move the waves back and forth by two waves over a period of 2.5 seconds.
 
 You can change these defaults with optional parameters:
 
@@ -51,9 +54,34 @@ WaveView(
 )
 ```
 
-> *Note*: When changing the animation behavior after view initializiation, you have to enforce rerendering the WaveView by use of the `.id(_ id: ID)` modifier!
+> **Note**: When changing the animation behavior *after* view initializiation, you have to enforce rerendering the WaveView by use of the `.id(_:)` modifier.
 
-The wave view can also be rotated between -45° and 45°. The rotaion angle is expressed as radians between -(π/4) and +(π/4):
+#### Overlapping multiple waves
+
+You can create a more dynamic behavior by overlapping several wave views and shifting each wave slightly using the `startPhase` parameter:
+
+```
+ZStack {
+    WaveView(
+        amplitude: 10,
+        waveLength: 0.25,
+        animationBehaviour: .continuous(duration: 2.5)
+    )
+    .foregroundStyle(.waveBlue)
+
+    WaveView(
+        amplitude: 10,
+        waveLength: 0.25,
+        animationBehaviour: .continuous(duration: 2.0),
+        startPhase: 0.5
+    )
+    .foregroundStyle(.deepSeaBlue)
+    .opacity(0.8)
+}
+```
+
+#### Rotating the water level
+The water level can also be rotated between -45° and 45°. The rotaion angle is expressed as radians between -(π/4) and +(π/4):
 
 ```
 WaveView(
@@ -63,7 +91,7 @@ WaveView(
 )
 ```
 
-You can also match the water level to the physical device's roll using the CoreMotion framework:
+You can also match the rotation to the physical device's roll using the CoreMotion framework:
 
 ```
 import SwiftUI
