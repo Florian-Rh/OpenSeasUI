@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-internal struct WaveShape: Shape {
+public struct WaveShape: Shape {
     private let amplitude: CGFloat
     private let waveLength: CGFloat
     private let waterLevel: CGFloat
     private(set) var phase: CGFloat = 0.0
     private let rotation: CGFloat
 
-    internal init(
+    public init(
         amplitude: CGFloat,
         waveLength: CGFloat,
         waterLevel: CGFloat = 0.5,
@@ -32,12 +32,12 @@ internal struct WaveShape: Shape {
         self.rotation = min(max(rotation, -(.pi / 4)), .pi / 4)
     }
 
-    internal var animatableData: Double {
+    public var animatableData: Double {
         get { phase }
         set { phase = newValue }
     }
 
-    internal func path(in rect: CGRect) -> Path {
+    public func path(in rect: CGRect) -> Path {
         var path = Path()
         let width = rect.width
 
