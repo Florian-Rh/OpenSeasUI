@@ -6,30 +6,34 @@
 //
 
 import SwiftUI
+import CoreMotion
 
-@available(iOS 17.0, *)
-struct WaveDemoView: View {
-
+internal struct WaveDemoView: View {
     @State private var waveAmplitude: CGFloat = 10.0
     @State private var animationDuration: CGFloat = 1.0
     @State private var waveLength: CGFloat = 0.25
     @State private var waterLevel: CGFloat = 0.50
     @State private var rotation: CGFloat = 0.0
+    @State private var clipToDeviceRotation: Bool = false
     @State private var distance: Int = 1
     @State private var animationBehavior: WaveView.AnimationBahaviour = .continuous(duration: 1.0)
+    @State private var showControls = false
 
-    @State private var showControls = true
-
+    // The id is used to enfore re-rendering the wave views after the animation is changed
     @State private var id = UUID()
 
-    var body: some View {
+    private let motionManager = CMMotionManager()
+
+    internal var body: some View {
         ZStack(alignment: .bottom) {
+            // Background
             LinearGradient(
                 gradient: .coralSunsetGradient,
                 startPoint: .bottom,
                 endPoint: .top
             )
 
+            // Background wave with offset startPhase and slower animation
             WaveView(
                 amplitude: waveAmplitude,
                 waveLength: waveLength,
@@ -43,6 +47,7 @@ struct WaveDemoView: View {
                 LinearGradient(gradient: .midnightAbyssGradient, startPoint: .top, endPoint: .bottom)
             )
 
+            // Foreground wave
             WaveView(
                 amplitude: waveAmplitude,
                 waveLength: waveLength,
@@ -56,6 +61,7 @@ struct WaveDemoView: View {
             )
             .opacity(0.8)
 
+            // Control panel
             VStack {
                 HStack {
                     Button {
@@ -104,6 +110,15 @@ struct WaveDemoView: View {
                         minimumValueLabel: { Text("-1,0") },
                         maximumValueLabel: { Text("1,0")}
                     )
+                    Toggle("Clip to device rotation", isOn: $clipToDeviceRotation)
+                        .onChange(of: clipToDeviceRotation) { _, _ in
+                            if clipToDeviceRotation {
+                                self.startDeviceMotionUpdates()
+                            } else {
+                                self.stopDeviceMotionUpdates()
+                            }
+                        }
+
                     Text("Animation behavior")
                     Picker("", selection: $animationBehavior) {
                         Text("Continuous")
@@ -155,10 +170,10 @@ struct WaveDemoView: View {
                 }
             }
             .padding()
-            .background(.white)
+            .padding(.bottom, 15.0)
+            .background(.background)
             .clipShape(RoundedRectangle(cornerRadius: 15.0))
             .ignoresSafeArea()
-            .overlay(RoundedRectangle(cornerRadius: 15.0).stroke())
             .padding(.horizontal)
         }
         .ignoresSafeArea()
@@ -174,9 +189,21 @@ struct WaveDemoView: View {
                 return .none
         }
     }
+
+    private func startDeviceMotionUpdates() {
+        self.motionManager.deviceMotionUpdateInterval = 0.01
+        self.motionManager.startDeviceMotionUpdates(to: .main) { motion, _ in
+            if let gravity = motion?.gravity {
+                self.rotation = atan2(gravity.x, gravity.y) + .pi
+            }
+        }
+    }
+
+    private func stopDeviceMotionUpdates() {
+        self.motionManager.stopDeviceMotionUpdates()
+    }
 }
 
-@available(iOS 17.0, *)
 #Preview {
     WaveDemoView()
 }
