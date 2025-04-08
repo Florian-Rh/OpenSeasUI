@@ -7,8 +7,11 @@
 
 import SwiftUI
 
-@available(iOS 17.0, *)
 public struct WaveView: View {
+    /// Describes how the waves should be animated. Options are:
+    ///  -  `.continuous(duration: Double)`: Waves move continously in one direction using the `linear` animation. The `duration` parameter describes, in seconds, how long ot takes to complete one animation.
+    ///  - `.backAndForth(duration: Double, distance: Int)`: Waves move back and forth using the `easeInOut` animation. The `duration` parameter describes, in seconds, how long ot takes to complete one animation. The `distance` parameter describes how many waves pass in one direction before the direction is reversed
+    ///  - `.none`: Waves are not animated
     public enum AnimationBahaviour: Hashable {
         case continuous(duration: Double)
         case backAndForth(duration: Double, distance: Int = 2)
@@ -41,14 +44,22 @@ public struct WaveView: View {
         }
     }
 
-    let amplitude: Double
-    let waveLength: Double
-    let waterLevel: Double
-    let animationBehaviour: AnimationBahaviour
-    let rotation: Double
+    private let amplitude: Double
+    private let waveLength: Double
+    private let waterLevel: Double
+    private let animationBehaviour: AnimationBahaviour
+    private let rotation: Double
     private let startPhase: Double
     @State private var phase: Double
 
+    /// Initializes a new wave view. The view consists of a sine wave and a filled area under the wave.
+    /// - Parameters:
+    ///   - amplitude: The height of the wave
+    ///   - waveLength: The length of the wave. Note: This value must be greater than Zero. If it is smaller or equal to zero, the initializer will fallback to `Double.leastNormalMagnitude`
+    ///   - waterLevel: Level in fraction of the surrounding rectangle, where the water line should be drawn.
+    ///   - animationBehavior: Describes how the waves should be animated.
+    ///   - rotation: Rotation of the water surface in radians. Note: Rotation can only defined between -.pi/4 and .pi/4 (or -45° and 45°). Past 45°, the device oriantation changes. The initializer will fallback to -.pi/4 if the passed value is smaller, and it will fallback to .pi/4 if the passed value is greater.
+    ///   - phase: The phase of the sine wave in radians. I.e. `2 * Double.pi` is a full revolution.  Used to animate a wave motion and to initialize waves in different phases.
     public init(
         amplitude: Double,
         waveLength: Double,
@@ -90,7 +101,6 @@ public struct WaveView: View {
     }
 }
 
-@available(iOS 17.0, *)
 #Preview {
     WaveView(
         amplitude: 50,
