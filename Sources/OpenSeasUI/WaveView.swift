@@ -59,14 +59,14 @@ public struct WaveView: View {
     ///   - waterLevel: Level in fraction of the surrounding rectangle, where the water line should be drawn.
     ///   - animationBehavior: Describes how the waves should be animated.
     ///   - rotation: Rotation of the water surface in radians. Note: Rotation can only defined between -.pi/4 and .pi/4 (or -45° and 45°). Past 45°, the device oriantation changes. The initializer will fallback to -.pi/4 if the passed value is smaller, and it will fallback to .pi/4 if the passed value is greater.
-    ///   - phase: The phase of the sine wave in radians. I.e. `2 * Double.pi` is a full revolution.  Used to animate a wave motion and to initialize waves in different phases.
+    ///   - startPhase: The phase of the sine wave function in which the wave should start. Accepts values between 0.0 and 1.0.
     public init(
         amplitude: Double,
         waveLength: Double,
         waterLevel: Double = 0.5,
         animationBehaviour: AnimationBahaviour = .backAndForth(duration: 2.5),
         rotation: Double = 0.0,
-        startPhase: Double = 1
+        startPhase: Double = 0.0
     ) {
         self.amplitude = amplitude
         self.waveLength = waveLength
