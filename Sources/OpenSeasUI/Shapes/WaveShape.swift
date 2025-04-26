@@ -27,9 +27,7 @@ public struct WaveShape: Shape {
         self.waveLength = max(waveLength, CGFloat.leastNormalMagnitude)
         self.waterLevel = waterLevel
         self.phase = phase
-
-        // Rotation is only defined between -.pi/4 and .pi/4 (or -45° and 45°).
-        self.rotation = min(max(rotation, -(.pi / 4)), .pi / 4)
+        self.rotation = rotation
     }
 
     public var animatableData: Double {
@@ -41,8 +39,9 @@ public struct WaveShape: Shape {
         var path = Path()
         let width = rect.width
 
-        // Calculate how much longer the waves need to be in order to fill the entire rectangle, if the surface line is rotated
-        let hypothenuse = width / cos(rotation)
+        // Calculate how much longer the waves need to be in order to
+        // fill the entire rectangle, if the surface line is rotated
+        let hypothenuse = sqrt(pow(rect.width, 2) + pow(rect.height, 2))
         let rotationElongation = (hypothenuse - width) + amplitude
         let startX: CGFloat = 0.0 - rotationElongation
         let endX: CGFloat = width + rotationElongation
@@ -56,30 +55,39 @@ public struct WaveShape: Shape {
             path.addLine(to: CGPoint(x: xPoint, y: yPoint))
         }
 
+        // Close the area under the wave
+        path.addLine(to: CGPoint(x: endX, y: hypothenuse))
+        path.addLine(to: CGPoint(x: startX, y: hypothenuse))
+        path.closeSubpath()
+
         // Rotate the top water line
         path = path
-            .rotation(.radians(rotation), anchor: .top)
+            .rotation(.radians(rotation), anchor: .center)
             .path(in: rect)
 
         // Translate to the desired water level
-        let verticalTranslation = rect.height * (1 - waterLevel)
+        // - Adding or substracting the height of the amplitude,
+        //   so waterLevel of 1.0 covers everything, and 0.0 covers nothing
+        // - Accounting for rotation by multiplying with cos (vertical axis)
+        //   or sin (horizontal axis)
+        let amplitudeModifier = (waterLevel * 2 - 1) * amplitude
+        let vBaseOffset = (rect.height * (1-waterLevel))
+        let vTranslation = (vBaseOffset - amplitudeModifier) * cos(rotation)
+
+        let hBaseOffset = (rect.width * waterLevel) - (rect.width + rect.height) / 2
+        let hTranslation = (hBaseOffset + amplitudeModifier) * sin(rotation)
+
         path = path
-            .transform(.init(translationX: 0, y: verticalTranslation))
+            .transform(.init(translationX: hTranslation, y: vTranslation))
             .path(in: rect)
 
-        // Fill the area under the water line
-        path.addLine(to: CGPoint(x: width, y: rect.height))
-        path.addLine(to: CGPoint(x: 0, y: rect.height))
-        path.closeSubpath()
-
         // Truncate anything outside the bounding rectangle
-        let box = Path(roundedRect: rect, cornerRadius: 0.0)
+        let box = Path(rect)
         path = path.intersection(box)
 
         return path
     }
 }
-
 
 #Preview {
     WaveShape(

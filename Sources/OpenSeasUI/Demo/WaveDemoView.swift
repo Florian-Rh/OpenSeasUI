@@ -105,7 +105,7 @@ internal struct WaveDemoView: View {
                     Text("Rotation: \(rotation, specifier: "%.2F")")
                     Slider(
                         value: $rotation,
-                        in: -1.0...1.0,
+                        in: -Double.pi...Double.pi,
                         label: { EmptyView() },
                         minimumValueLabel: { Text("-1,0") },
                         maximumValueLabel: { Text("1,0")}
