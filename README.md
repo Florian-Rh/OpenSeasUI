@@ -91,7 +91,7 @@ ZStack {
 ```
 
 #### Rotating the water level
-The water level can also be rotated between -45° and 45°. The rotaion angle is expressed as radians between -(π/4) and +(π/4):
+The water level can also be rotated a full 360°. The rotaion angle is expressed as radians:
 
 ```
 WaveView(
