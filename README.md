@@ -3,7 +3,7 @@
 OpenSeasUI is a Swift Package that contains animated views aimed at mimicing the behavior of water. It can be used in iOS Apps (other Apple Platforms are on the roadmap) to create engaging and beautiful UIs, or to visually convey maritime weather information like wave behavior.
 
 
-<img src="https://github.com/user-attachments/assets/90c01102-267d-41f9-8ca3-2f831d6f8aa3" width="200">
+<img src="https://github.com/user-attachments/assets/90c01102-267d-41f9-8ca3-2f831d6f8aa3" width="150">
 
 
 ## How to include this Swift Package
