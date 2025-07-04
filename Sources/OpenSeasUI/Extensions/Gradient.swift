@@ -21,7 +21,7 @@ public extension Gradient {
     }
 
     static var midnightAbyssGradient: Gradient {
-        Gradient(colors: [.abyssBlue, .deepSeaBlue, .waveBlue])
+        Gradient(colors: [.oceanBlue, .deepSeaBlue, .abyssBlue, .black])
     }
 
     static var crystalLagoonGradient: Gradient {
