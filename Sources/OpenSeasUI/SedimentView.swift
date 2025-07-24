@@ -15,62 +15,124 @@ struct SedimentView: View {
     }
 
     private struct ParticleView: View {
+        enum AnimationPhase: CaseIterable {
+            case start
+            case end
+            case respawn
+        }
+
         private let particle: Particle
         private let boundingArea: CGRect
         private let vector: CGVector
-        @State private var currentFrame: CGRect?
+        @State private var currentDestination: CGPoint?
+        @State private var animationStartTime: Date?
         @State private var id = UUID()
 
-        /// The point at which the partivle first appears
-        private var startPosition: CGPoint {
-            // TODO: startPosition ändert sich nicht mit einer Änderung des Vectors, daher wird die Animation nicht geändert, wenn der Punkt in der Animationsphase startPosition ist
-            particle.startPosition
-        }
+        /// The point at which the particle first appears
+        @State private var startPosition: CGPoint
 
         /// The point the particle travels to after appearing.
         /// In the bounding area, this is the point where the particle hits the area when following the given vector
-        private var endPosition: CGPoint {
-            Geometry.intersectionPoint(
-                in: boundingArea,
-                from: startPosition,
-                direction: vector
-            )
-        }
+        @State private var endPosition: CGPoint
 
         /// The point at which the particle should respawn after it reached the end position.
         /// In the bounding area, this is the point opposite from the end position in the given direction
-        private var respawnPosition: CGPoint {
-            Geometry.intersectionPoint(
-                in: boundingArea,
-                from: startPosition,
-                direction: vector.inverted
-            )
-        }
+        @State private var respawnPosition: CGPoint
 
         init(particle: Particle, inFrame area: CGRect, vector: CGVector) {
             self.particle = particle
             self.boundingArea = area
             self.vector = vector
+            self.startPosition = particle.startPosition
+
+            self.endPosition = Geometry.intersectionPoint(
+                in: boundingArea,
+                from: particle.startPosition,
+                direction: vector
+            )
+            self.respawnPosition = Geometry.intersectionPoint(
+                in: boundingArea,
+                from: particle.startPosition,
+                direction: vector.inverted
+            )
         }
 
         var body: some View {
             Circle()
                 .frame(width: 2, height: 2)
                 .phaseAnimator(
-                    [startPosition, endPosition, respawnPosition],
-                    content: { view, position in
-                        view.position(position)
+                    AnimationPhase.allCases,
+                    content: { view, phase in
+                        let position = getPosition(for: phase)
+
+                        return view
+                            .position(position)
+                            .onChange(of: phase) {
+                                self.animationStartTime = Date()
+                                self.currentDestination = position
+                            }
                     },
-                    animation: { position in
+                    animation: { phase in
+                        let position = getPosition(for: phase)
                         let duration = calculateDuration(forPosition: position)
 
-                        return Animation
-                            .linear(duration: duration)
+                        return .linear(duration: duration)
                     }
                 )
                 .onChange(of: vector) {
-                    // TODO: aktuelle position bestimmen und startPosition überschreiben
+                    print("Vector changed")
+                    guard let currentDestination, let animationStartTime else { return }
+                    let previousPosition: CGPoint
+                    switch currentDestination {
+                        case endPosition:
+                            previousPosition = startPosition
+                        case respawnPosition:
+                            previousPosition = endPosition
+                        case startPosition:
+                            previousPosition = respawnPosition
+                        default:
+                            previousPosition = startPosition
+                    }
+                    print("Previous position: \(previousPosition)")
+                    print("Destination position: \(currentDestination)")
+                    print("Animation start: \(animationStartTime.timeIntervalSince1970)")
+                    print("current time: \(Date().timeIntervalSince1970)")
+                    let duration = calculateDuration(forPosition: currentDestination)
+                    print("duration: \(duration)")
+                    let approximatePosition = Geometry
+                        .calculatePosition(
+                            between: previousPosition,
+                            and: currentDestination,
+                            forTime: Date(),
+                            startTime: animationStartTime,
+                            duration: duration
+                        )
+                    print("Approx. current position: \(approximatePosition)")
+                    self.startPosition = approximatePosition
+                    self.endPosition = Geometry.intersectionPoint(
+                        in: boundingArea,
+                        from: approximatePosition,
+                        direction: vector
+                    )
+                    self.respawnPosition = Geometry.intersectionPoint(
+                        in: boundingArea,
+                        from: approximatePosition,
+                        direction: vector.inverted
+                    )
+                    self.id = UUID()
                 }
+                .id(id)
+        }
+
+        private func getPosition(for phase: AnimationPhase) -> CGPoint {
+            switch phase {
+                case .start:
+                    self.startPosition
+                case .end:
+                    self.endPosition
+                case .respawn:
+                    self.respawnPosition
+            }
         }
 
         private func calculateDuration(forPosition position: CGPoint) -> Double {
@@ -89,7 +151,7 @@ struct SedimentView: View {
                         b: startPosition
                     )
                 default:
-                    fatalError("unexpected position for particle: \(position)")
+                    distance = 0
             }
 
             return distance / 30
@@ -99,7 +161,7 @@ struct SedimentView: View {
     @Binding private var angle: Angle
     private let seed: Int
     private let numberOfParticles: Int
-    @State private var particles: [Particle] = []
+    @State private var particles: [Particle] = [] // [Particle(startPosition: .init(x: 125, y: 125), id: 1)]
 
     init(
         angle: Binding<Angle>,
@@ -151,7 +213,7 @@ struct SedimentView: View {
     @Previewable @State var angle: Angle = .zero
 
     VStack {
-        SedimentView(angle: $angle, seed: 1, numberOfParticles: 1)
+        SedimentView(angle: $angle, seed: 1, numberOfParticles: 100)
             .ignoresSafeArea()
             .frame(width: 250, height: 250)
             .border(.red)

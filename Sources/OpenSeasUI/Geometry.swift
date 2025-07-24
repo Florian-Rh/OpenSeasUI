@@ -64,5 +64,27 @@ class Geometry {
 
         return sqrt(pow(dx, 2) + pow(dy, 2))
     }
+
+    static func calculatePosition(
+        between startPoint: CGPoint,
+        and endPoint: CGPoint,
+        forTime time: Date,
+        startTime: Date,
+        duration: TimeInterval
+    ) -> CGPoint {
+        let animationTime = time.timeIntervalSince(startTime)
+        let progress = animationTime / duration
+        if progress >= 1 {
+            return endPoint
+        }
+        print("progress: \(progress)")
+
+        let dx = endPoint.x - startPoint.x
+        let dy = endPoint.y - startPoint.y
+        let xAtTime = startPoint.x + dx * progress
+        let yAtTime = startPoint.y + dy * progress
+
+        return CGPoint(x: xAtTime, y: yAtTime)
+    }
 }
 
