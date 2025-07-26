@@ -1,7 +1,7 @@
 import CoreGraphics
 import SwiftUI
 
-class Geometry {
+public class Geometry {
     /// Calculates the intersection of a ray from a start point in a given direction with the rectangle.
     /// - Parameters:
     ///   - start: The origin point of the ray (should be inside the rectangle).

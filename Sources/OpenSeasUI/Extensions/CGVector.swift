@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension CGVector {
+public extension CGVector {
     var inverted: CGVector {
         CGVector(dx: -self.dx, dy: -self.dy)
     }
