@@ -10,6 +10,8 @@ class Geometry {
     static func intersectionPoint(in rect: CGRect, from start: CGPoint, direction: CGVector) -> CGPoint {
         let rectMaxX = rect.maxX
         let rectMaxY = rect.maxY
+        let rectMinX = rect.minX
+        let rectMinY = rect.minY
         let originX = start.x
         let originY = start.y
         let dirX = direction.dx
@@ -20,14 +22,14 @@ class Geometry {
             // Moving right: check intersection with right side (x = maxX)
             let tRight = (rectMaxX - originX) / dirX
             let yAtRight = originY + tRight * dirY
-            if tRight > 0 && yAtRight >= 0 && yAtRight <= rectMaxY {
+            if tRight > 0 && yAtRight >= rectMinY && yAtRight <= rectMaxY {
                 tCandidates.append(tRight)
             }
         } else if dirX < 0 {
             // Moving left: check intersection with left side (x = 0)
             let tLeft = (0 - originX) / dirX
             let yAtLeft = originY + tLeft * dirY
-            if tLeft > 0 && yAtLeft >= 0 && yAtLeft <= rectMaxY {
+            if tLeft > 0 && yAtLeft >= rectMinY && yAtLeft <= rectMaxY {
                 tCandidates.append(tLeft)
             }
         }
@@ -36,14 +38,14 @@ class Geometry {
             // Moving down: check intersection with bottom side (y = maxY)
             let tBottom = (rectMaxY - originY) / dirY
             let xAtBottom = originX + tBottom * dirX
-            if tBottom > 0 && xAtBottom >= 0 && xAtBottom <= rectMaxX {
+            if tBottom > 0 && xAtBottom >= rectMinX && xAtBottom <= rectMaxX {
                 tCandidates.append(tBottom)
             }
         } else if dirY < 0 {
             // Moving up: check intersection with top side (y = 0)
             let tTop = (0 - originY) / dirY
             let xAtTop = originX + tTop * dirX
-            if tTop > 0 && xAtTop >= 0 && xAtTop <= rectMaxX {
+            if tTop > 0 && xAtTop >= rectMinX && xAtTop <= rectMaxX {
                 tCandidates.append(tTop)
             }
         }
@@ -72,12 +74,11 @@ class Geometry {
         startTime: Date,
         duration: TimeInterval
     ) -> CGPoint {
-        let animationTime = time.timeIntervalSince(startTime)
-        let progress = animationTime / duration
+        let elapsedTime = time.timeIntervalSince(startTime)
+        let progress = elapsedTime / duration
         if progress >= 1 {
             return endPoint
         }
-        print("progress: \(progress)")
 
         let dx = endPoint.x - startPoint.x
         let dy = endPoint.y - startPoint.y
