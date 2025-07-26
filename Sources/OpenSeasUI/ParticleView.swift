@@ -10,6 +10,11 @@ import SwiftUI
 public struct Particle: Identifiable {
     public let startPosition: CGPoint
     public let id: Int
+
+    public init(startPosition: CGPoint, id: Int) {
+        self.startPosition = startPosition
+        self.id = id
+    }
 }
 
 public struct ParticleView<CustomParticle: View>: View {
