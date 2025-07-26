@@ -7,7 +7,7 @@ public class Geometry {
     ///   - start: The origin point of the ray (should be inside the rectangle).
     ///   - direction: The direction vector of the ray.
     /// - Returns: The intersection point with the rectangle's edge, or the start point if no intersection is found.
-    static func intersectionPoint(in rect: CGRect, from start: CGPoint, direction: CGVector) -> CGPoint {
+    public static func intersectionPoint(in rect: CGRect, from start: CGPoint, direction: CGVector) -> CGPoint {
         let rectMaxX = rect.maxX
         let rectMaxY = rect.maxY
         let rectMinX = rect.minX
@@ -60,14 +60,14 @@ public class Geometry {
         return CGPoint(x: intersectionX, y: intersectionY)
     }
 
-    static func calculateDistance(a: CGPoint, b: CGPoint) -> Double {
+    public static func calculateDistance(a: CGPoint, b: CGPoint) -> Double {
         let dx = a.x - b.x
         let dy = a.y - b.y
 
         return sqrt(pow(dx, 2) + pow(dy, 2))
     }
 
-    static func calculatePosition(
+    public static func calculatePosition(
         between startPoint: CGPoint,
         and endPoint: CGPoint,
         forTime time: Date,
