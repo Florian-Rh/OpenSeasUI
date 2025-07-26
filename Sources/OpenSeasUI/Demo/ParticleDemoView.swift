@@ -1,5 +1,5 @@
 //
-//  SwiftUIView 2.swift
+//  ParticleDemoView.swift
 //  OpenSeasUI
 //
 //  Created by Florian Rhein on 25.07.25.

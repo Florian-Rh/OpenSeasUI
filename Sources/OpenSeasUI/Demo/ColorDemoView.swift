@@ -1,5 +1,5 @@
 //
-//  SwiftUIView.swift
+//  ColorDemoView.swift
 //  OpenSeasUI
 //
 //  Created by Florian Rhein on 04.07.25.
