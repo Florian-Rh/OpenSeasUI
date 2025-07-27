@@ -24,6 +24,15 @@ internal struct WaveDemoView: View {
 
     private let motionManager = CMMotionManager()
 
+    private var pickerStyle: some PickerStyle {
+#if os(watchOS)
+        return .automatic
+#else
+        return .segmented
+#endif
+
+    }
+
     internal var body: some View {
         ZStack(alignment: .bottom) {
             // Background
@@ -78,93 +87,95 @@ internal struct WaveDemoView: View {
                     Spacer()
                 }
                 if showControls {
-                    Text("Amplitude: \(waveAmplitude, specifier: "%.1F")")
-                    Slider(
-                        value: $waveAmplitude,
-                        in: 0.0...100.0,
-                        label: { EmptyView() },
-                        minimumValueLabel: { Text("0,0") },
-                        maximumValueLabel: { Text("100,0")}
-                    )
-                    Text("Wave length: \(waveLength, specifier: "%.2F")")
-                    Slider(
-                        value: $waveLength,
-                        in: 0.0...1.0,
-                        label: { EmptyView() },
-                        minimumValueLabel: { Text("0,0") },
-                        maximumValueLabel: { Text("1,0")}
-                    )
-                    Text("Water Level: \(waterLevel, specifier: "%.2F")")
-                    Slider(
-                        value: $waterLevel,
-                        in: 0.0...1.0,
-                        label: { EmptyView() },
-                        minimumValueLabel: { Text("0,0") },
-                        maximumValueLabel: { Text("1,0")}
-                    )
-                    Text("Rotation: \(rotation, specifier: "%.2F")")
-                    Slider(
-                        value: $rotation,
-                        in: -Double.pi...Double.pi,
-                        label: { EmptyView() },
-                        minimumValueLabel: { Text("-1,0") },
-                        maximumValueLabel: { Text("1,0")}
-                    )
-                    Toggle("Clip to device rotation", isOn: $clipToDeviceRotation)
-                        .onChange(of: clipToDeviceRotation) { _, _ in
-                            if clipToDeviceRotation {
-                                self.startDeviceMotionUpdates()
-                            } else {
-                                self.stopDeviceMotionUpdates()
-                            }
-                        }
-
-                    Text("Animation behavior")
-                    Picker("", selection: $animationBehavior) {
-                        Text("Continuous")
-                            .tag(WaveView.AnimationBahaviour.continuous(duration: animationDuration))
-                        Text("Back and forth")
-                            .tag(
-                                WaveView.AnimationBahaviour.backAndForth(
-                                    duration: animationDuration,
-                                    distance: distance
-                                )
-                            )
-                        Text("None")
-                            .tag(WaveView.AnimationBahaviour.none)
-                    }
-                    .pickerStyle(.segmented)
-                    .onChange(of: animationBehavior) { _, _ in
-                        id = UUID()
-                    }
-
-                    if case .backAndForth(_, _) = animationBehavior {
-                        Stepper("Distance: \(distance)", value: $distance, in: 1...10)
-                            .onChange(of: distance) { _, _ in
-                                animationBehavior = .backAndForth(duration: animationDuration, distance: distance)
-                                id = UUID()
-                            }
-                    }
-
-                    if animationBehavior != .none {
-                        Text("Animation duration: \(animationDuration, specifier: "%.2F")")
+                    ScrollView {
+                        Text("Amplitude: \(waveAmplitude, specifier: "%.1F")")
                         Slider(
-                            value: $animationDuration,
-                            in: 0.0...10.0,
+                            value: $waveAmplitude,
+                            in: 0.0...100.0,
                             label: { EmptyView() },
                             minimumValueLabel: { Text("0,0") },
-                            maximumValueLabel: { Text("10,0")}
+                            maximumValueLabel: { Text("100,0")}
                         )
-                        .onChange(of: animationDuration) { _, _ in
-                            switch animationBehavior {
-                                case .continuous(_):
-                                    animationBehavior = .continuous(duration: animationDuration)
-                                case let .backAndForth(_, distance):
-                                    animationBehavior = .backAndForth(duration: animationDuration, distance: distance)
-                                case .none:
-                                    animationBehavior = .none
+                        Text("Wave length: \(waveLength, specifier: "%.2F")")
+                        Slider(
+                            value: $waveLength,
+                            in: 0.0...1.0,
+                            label: { EmptyView() },
+                            minimumValueLabel: { Text("0,0") },
+                            maximumValueLabel: { Text("1,0")}
+                        )
+                        Text("Water Level: \(waterLevel, specifier: "%.2F")")
+                        Slider(
+                            value: $waterLevel,
+                            in: 0.0...1.0,
+                            label: { EmptyView() },
+                            minimumValueLabel: { Text("0,0") },
+                            maximumValueLabel: { Text("1,0")}
+                        )
+                        Text("Rotation: \(rotation, specifier: "%.2F")")
+                        Slider(
+                            value: $rotation,
+                            in: -Double.pi...Double.pi,
+                            label: { EmptyView() },
+                            minimumValueLabel: { Text("-1,0") },
+                            maximumValueLabel: { Text("1,0")}
+                        )
+                        Toggle("Clip to device rotation", isOn: $clipToDeviceRotation)
+                            .onChange(of: clipToDeviceRotation) { _, _ in
+                                if clipToDeviceRotation {
+                                    self.startDeviceMotionUpdates()
+                                } else {
+                                    self.stopDeviceMotionUpdates()
+                                }
                             }
+
+                        Text("Animation behavior")
+                        Picker("", selection: $animationBehavior) {
+                            Text("Continuous")
+                                .tag(WaveView.AnimationBahaviour.continuous(duration: animationDuration))
+                            Text("Back and forth")
+                                .tag(
+                                    WaveView.AnimationBahaviour.backAndForth(
+                                        duration: animationDuration,
+                                        distance: distance
+                                    )
+                                )
+                            Text("None")
+                                .tag(WaveView.AnimationBahaviour.none)
+                        }
+                        .pickerStyle(pickerStyle)
+                        .onChange(of: animationBehavior) { _, _ in
                             id = UUID()
+                        }
+
+                        if case .backAndForth(_, _) = animationBehavior {
+                            Stepper("Distance: \(distance)", value: $distance, in: 1...10)
+                                .onChange(of: distance) { _, _ in
+                                    animationBehavior = .backAndForth(duration: animationDuration, distance: distance)
+                                    id = UUID()
+                                }
+                        }
+
+                        if animationBehavior != .none {
+                            Text("Animation duration: \(animationDuration, specifier: "%.2F")")
+                            Slider(
+                                value: $animationDuration,
+                                in: 0.0...10.0,
+                                label: { EmptyView() },
+                                minimumValueLabel: { Text("0,0") },
+                                maximumValueLabel: { Text("10,0")}
+                            )
+                            .onChange(of: animationDuration) { _, _ in
+                                switch animationBehavior {
+                                    case .continuous(_):
+                                        animationBehavior = .continuous(duration: animationDuration)
+                                    case let .backAndForth(_, distance):
+                                        animationBehavior = .backAndForth(duration: animationDuration, distance: distance)
+                                    case .none:
+                                        animationBehavior = .none
+                                }
+                                id = UUID()
+                            }
                         }
                     }
                 }

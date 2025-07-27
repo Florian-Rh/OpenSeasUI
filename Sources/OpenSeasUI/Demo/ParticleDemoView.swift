@@ -34,6 +34,14 @@ struct ParticleDemoView: View {
         .sandBeige,
     ]
 
+    private var pickerStyle: some PickerStyle {
+#if os(watchOS)
+        return .automatic
+#else
+        return .segmented
+#endif
+    }
+
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .bottom) {
@@ -44,7 +52,7 @@ struct ParticleDemoView: View {
 
                     ParticleView(
                         particle: particle,
-                        inFrame: proxy.frame(in: .local),
+                        inFrame: proxy.frame(in: .global),
                         vector: .init(from: angle),
                         speed: speed
                     ) {
@@ -84,53 +92,57 @@ struct ParticleDemoView: View {
                         Spacer()
                     }
                     if showControls {
-                        Text("Speed: \(speed, specifier: "%.1F")")
-                        Slider(
-                            value: $speed,
-                            in: 0.0...1000.0,
-                            label: { EmptyView() },
-                            minimumValueLabel: { Text("0,0") },
-                            maximumValueLabel: { Text("1000,0")}
-                        )
-
-                        Toggle("Random direction for each particle", isOn: $randomAngle)
-                        if !randomAngle {
-                            Text("Direction: \(selectedAngle.degrees, specifier: "%.1F°")")
+                        ScrollView {
+                            Text("Speed: \(speed, specifier: "%.1F")")
                             Slider(
-                                value: $selectedAngle.degrees,
-                                in: 0.0...360.0,
+                                value: $speed,
+                                in: 0.0...1000.0,
                                 label: { EmptyView() },
-                                minimumValueLabel: { Text("0") },
-                                maximumValueLabel: { Text("360")}
+                                minimumValueLabel: { Text("0,0") },
+                                maximumValueLabel: { Text("1000,0")}
                             )
-                        }
 
-                        Text("Number of particles: \(numberOfParticles)")
-                        Picker("", selection: $numberOfParticles) {
-                            Text("1").tag(1)
-                            Text("10").tag(10)
-                            Text("100").tag(100)
-                            Text("1000").tag(1000)
-                        }
-                        .pickerStyle(.segmented)
-                        .onChange(of: numberOfParticles) {
-                            self.calculateParticleLocations(
-                                inFrame: proxy.frame(in: .local)
-                            )
-                        }
+                            Toggle("Random direction for each particle", isOn: $randomAngle)
+                            if !randomAngle {
+                                Text("Direction: \(selectedAngle.degrees, specifier: "%.1F°")")
+                                Slider(
+                                    value: $selectedAngle.degrees,
+                                    in: 0.0...360.0,
+                                    label: { EmptyView() },
+                                    minimumValueLabel: { Text("0") },
+                                    maximumValueLabel: { Text("360")}
+                                )
+                            }
 
-                        Toggle("Random OpenSeasUI Color", isOn: $randomColor)
-                        if !randomColor {
-                            ColorPicker("Particle color", selection: $selectedColor)
-                        }
+                            Text("Number of particles: \(numberOfParticles)")
+                            Picker("", selection: $numberOfParticles) {
+                                Text("1").tag(1)
+                                Text("10").tag(10)
+                                Text("100").tag(100)
+                                Text("1000").tag(1000)
+                            }
+                            .pickerStyle(self.pickerStyle)
+                            .onChange(of: numberOfParticles) {
+                                self.calculateParticleLocations(
+                                    inFrame: proxy.frame(in: .local)
+                                )
+                            }
 
-                        Text("Shape")
-                        Picker("", selection: $selectedShape) {
-                            Image(systemName: "circle.fill").tag(ParticleShape.circle)
-                            Image(systemName: "arrow.right").tag(ParticleShape.arrow)
-                            Image(systemName: "fish").tag(ParticleShape.fish)
+#if !os(watchOS)
+                            Toggle("Random OpenSeasUI Color", isOn: $randomColor)
+                            if !randomColor {
+                                ColorPicker("Particle color", selection: $selectedColor)
+                            }
+#endif
+
+                            Text("Shape")
+                            Picker("", selection: $selectedShape) {
+                                Image(systemName: "circle.fill").tag(ParticleShape.circle)
+                                Image(systemName: "arrow.right").tag(ParticleShape.arrow)
+                                Image(systemName: "fish").tag(ParticleShape.fish)
+                            }
+                            .pickerStyle(self.pickerStyle)
                         }
-                        .pickerStyle(.segmented)
                     }
                 }
                 .padding()
