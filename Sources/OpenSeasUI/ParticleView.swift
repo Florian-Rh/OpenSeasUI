@@ -24,9 +24,11 @@ public struct ParticleView<CustomParticle: View>: View {
         case respawn
     }
 
+    private let updateInterval: TimeInterval
     private let boundingArea: CGRect
     private let vector: CGVector
     private let speed: Double
+    private let onPositionChanged: ((CGPoint) -> Void)?
     @ViewBuilder private let customParticleView: CustomParticle
     @State private var currentDestination: CGPoint?
     @State private var animationStartTime: Date?
@@ -38,24 +40,27 @@ public struct ParticleView<CustomParticle: View>: View {
     /// The point the particle travels to after appearing.
     /// In the bounding area, this is the point where the particle hits the area when following the given vector
     @State private var endPosition: CGPoint
-    
+
     /// The point at which the particle should respawn after it reached the end position.
     /// In the bounding area, this is the point opposite from the end position in the given direction
     @State private var respawnPosition: CGPoint
-    
+
     public init(
         particle: Particle,
         inFrame area: CGRect,
         vector: CGVector,
         speed: Double,
+        onPositionChanged: ((CGPoint) -> Void)? = nil,
+        updateInterval: TimeInterval = 1,
         @ViewBuilder customParticleView: () -> CustomParticle
     ) {
+        self.updateInterval = updateInterval
         self.boundingArea = area
         self.vector = vector
         self.speed = speed
         self.customParticleView = customParticleView()
         self.startPosition = particle.startPosition
-        
+
         self.endPosition = Geometry.intersectionPoint(
             in: boundingArea,
             from: particle.startPosition,
@@ -66,39 +71,47 @@ public struct ParticleView<CustomParticle: View>: View {
             from: particle.startPosition,
             direction: vector.inverted
         )
+        self.onPositionChanged = onPositionChanged
     }
 
     public var body: some View {
-        self.customParticleView
-            .phaseAnimator(
-                AnimationPhase.allCases,
-                content: { view, phase in
-                    let position = getPosition(for: phase)
+        TimelineView(.animation(minimumInterval: updateInterval)) { context in
+            self.customParticleView
+                .phaseAnimator(
+                    AnimationPhase.allCases,
+                    content: { view, phase in
+                        let destination = getDestination(for: phase)
 
-                    return view
-                        .position(position)
-                        .onChange(of: phase) {
-                            self.animationStartTime = Date()
-                            self.currentDestination = position
-                        }
-                },
-                animation: { phase in
-                    let position = getPosition(for: phase)
-                    let duration = calculateDuration(forPosition: position)
+                        return view
+                            .position(destination)
+                            .onChange(of: phase) {
+                                self.animationStartTime = Date()
+                                self.currentDestination = destination
+                            }
+                    },
+                    animation: { phase in
+                        let destination = getDestination(for: phase)
+                        let duration = calculateDuration(forPosition: destination)
 
-                    return .linear(duration: duration)
+                        return .linear(duration: duration)
+                    }
+                )
+                .onChange(of: vector) {
+                    restartAnimationFromCurrentPosition()
                 }
-            )
-            .onChange(of: vector) {
-                restartAnimationFromCurrentPosition()
-            }
-            .onChange(of: speed) {
-                restartAnimationFromCurrentPosition()
-            }
-            .id(id)
+                .onChange(of: speed) {
+                    restartAnimationFromCurrentPosition()
+                }
+                .onChange(of: context.date) {
+                    if let position = calculateCurrentPosition() {
+                        self.onPositionChanged?(position)
+                    }
+                }
+                .id(id)
+        }
     }
 
-    private func getPosition(for phase: AnimationPhase) -> CGPoint {
+    private func getDestination(for phase: AnimationPhase) -> CGPoint {
         switch phase {
             case .start:
                 self.startPosition
@@ -120,8 +133,8 @@ public struct ParticleView<CustomParticle: View>: View {
         return distance / speed
     }
 
-    private func restartAnimationFromCurrentPosition() {
-        guard let currentDestination, let animationStartTime else { return }
+    private func calculateCurrentPosition() -> CGPoint? {
+        guard let currentDestination, let animationStartTime else { return nil }
         let previousPosition = previousPosition(for: currentDestination)
         let duration = calculateDuration(forPosition: currentDestination)
         let approximatePosition = Geometry.calculatePosition(
@@ -131,6 +144,12 @@ public struct ParticleView<CustomParticle: View>: View {
             startTime: animationStartTime,
             duration: duration
         )
+
+        return approximatePosition
+    }
+
+    private func restartAnimationFromCurrentPosition() {
+        guard let approximatePosition = calculateCurrentPosition() else { return }
         self.startPosition = approximatePosition
         self.endPosition = Geometry.intersectionPoint(
             in: boundingArea,
