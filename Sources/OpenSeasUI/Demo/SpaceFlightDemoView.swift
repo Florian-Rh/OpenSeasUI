@@ -8,6 +8,11 @@
 import SwiftUI
 
 struct SpaceFlightDemoView: View {
+    struct Star: Identifiable {
+        let startPosition: CGPoint
+        let id: Int
+    }
+
     private enum WarpState {
         case inactive
         case poweringUp
@@ -85,7 +90,7 @@ struct SpaceFlightDemoView: View {
         }
     }
 
-    @State private var particles: [Particle] = []
+    @State private var stars: [Star] = []
     @State private var speed: Double = 25.0
     @State private var direction: Angle = .degrees(0)
     @State private var warpState: WarpState = .inactive
@@ -102,9 +107,9 @@ struct SpaceFlightDemoView: View {
         GeometryReader { proxy in
             ZStack {
                 Color.black
-                ForEach(particles) { particle in
+                ForEach(stars) { star in
                     ParticleView(
-                        particle: particle,
+                        startPosition: star.startPosition,
                         inFrame: proxy.frame(in: .local),
                         vector: .init(from: direction).inverted,
                         speed: speed
@@ -114,7 +119,7 @@ struct SpaceFlightDemoView: View {
                             .foregroundStyle(.white)
                     }
                     ParticleView(
-                        particle: particle,
+                        startPosition: star.startPosition,
                         inFrame: proxy.frame(in: .local),
                         vector: .init(from: direction).inverted,
                         speed: speed
@@ -183,7 +188,7 @@ struct SpaceFlightDemoView: View {
                                         let angle = atan2(dy, dx)
                                         let selectedSpeed = Geometry.calculateDistance(a: center, b: drag) * 2
                                         print(selectedSpeed)
-//                                        self.speed = min(selectedSpeed, maxSpeed)
+                                        self.speed = min(selectedSpeed, maxSpeed)
                                         direction = .radians(angle)
                                     }
                                     .onEnded { _ in
@@ -234,7 +239,7 @@ struct SpaceFlightDemoView: View {
 
     private func calculateParticleLocations(inFrame frame: CGRect) {
         var randomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
-        self.particles = []
+        self.stars = []
         for index in 0..<numberOfParticles {
             let x: CGFloat = CGFloat.random(
                 in: 0...2,
@@ -245,8 +250,8 @@ struct SpaceFlightDemoView: View {
                 using: &randomNumberGenerator
             )
 
-            self.particles.append(
-                Particle(
+            self.stars.append(
+                Star(
                     startPosition: .init(x: frame.midX * x, y: frame.midY * y),
                     id: index
                 )

@@ -8,7 +8,10 @@
 import SwiftUI
 
 struct ParticleDemoView: View {
-
+    struct Particle: Identifiable {
+        public let startPosition: CGPoint
+        public let id: Int
+    }
     @State private var particles: [Particle] = []
     @State private var showControls = true
     @State private var speed: Double = 20.0
@@ -51,8 +54,8 @@ struct ParticleDemoView: View {
                     let angle = randomAngle ? Angle(degrees: Double.random(in: 0...360)) : selectedAngle
 
                     ParticleView(
-                        particle: particle,
-                        inFrame: proxy.frame(in: .global),
+                        startPosition: particle.startPosition,
+                        inFrame: proxy.frame(in: .local),
                         vector: .init(from: angle),
                         speed: speed
                     ) {
@@ -92,7 +95,7 @@ struct ParticleDemoView: View {
                         Spacer()
                     }
                     if showControls {
-                        ScrollView {
+//                        ScrollView {
                             Text("Speed: \(speed, specifier: "%.1F")")
                             Slider(
                                 value: $speed,
@@ -143,7 +146,7 @@ struct ParticleDemoView: View {
                             }
                             .pickerStyle(self.pickerStyle)
                         }
-                    }
+//                    }
                 }
                 .padding()
                 .padding(.bottom, 15.0)
