@@ -64,7 +64,7 @@ public class Geometry {
         let dx = a.x - b.x
         let dy = a.y - b.y
 
-        return sqrt(pow(dx, 2) + pow(dy, 2))
+        return hypot(dx, dy)
     }
 
     public static func calculatePosition(

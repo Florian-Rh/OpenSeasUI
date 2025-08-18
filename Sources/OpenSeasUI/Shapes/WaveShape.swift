@@ -41,7 +41,7 @@ public struct WaveShape: Shape {
 
         // Calculate how much longer the waves need to be in order to
         // fill the entire rectangle, if the surface line is rotated
-        let hypothenuse = sqrt(pow(rect.width, 2) + pow(rect.height, 2))
+        let hypothenuse = hypot(rect.width, rect.height)
         let rotationElongation = (hypothenuse - width) + amplitude
         let startX: CGFloat = 0.0 - rotationElongation
         let endX: CGFloat = width + rotationElongation
