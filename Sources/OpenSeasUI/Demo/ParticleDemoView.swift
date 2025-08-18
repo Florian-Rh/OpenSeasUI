@@ -56,8 +56,7 @@ struct ParticleDemoView: View {
                     ParticleView(
                         startPosition: particle.startPosition,
                         inFrame: proxy.frame(in: .local),
-                        vector: .init(from: angle),
-                        speed: speed
+                        vector: .init(from: angle).scaled(by: speed)
                     ) {
                         switch selectedShape {
                             case .circle:

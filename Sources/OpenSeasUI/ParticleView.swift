@@ -17,7 +17,6 @@ public struct ParticleView<CustomParticle: View>: View {
     private let positionUpdateInterval: TimeInterval
     private let boundingArea: CGRect
     private let vector: CGVector
-    private let speed: Double
     private let onPositionChanged: ((CGPoint) -> Void)?
     @ViewBuilder private let customParticleView: CustomParticle
     @State private var currentPhase: AnimationPhase?
@@ -30,7 +29,6 @@ public struct ParticleView<CustomParticle: View>: View {
         startPosition: CGPoint,
         inFrame area: CGRect,
         vector: CGVector,
-        speed: Double,
         onPositionChanged: ((CGPoint) -> Void)? = nil,
         positionUpdateInterval: TimeInterval = 1,
         @ViewBuilder customParticleView: () -> CustomParticle
@@ -38,7 +36,6 @@ public struct ParticleView<CustomParticle: View>: View {
         self.positionUpdateInterval = positionUpdateInterval
         self.boundingArea = area
         self.vector = vector
-        self.speed = speed
         self.customParticleView = customParticleView()
 
         self.onPositionChanged = onPositionChanged
@@ -46,8 +43,7 @@ public struct ParticleView<CustomParticle: View>: View {
         self.animationPhases = .init(
             inFrame: area,
             from: startPosition,
-            vector: vector,
-            speed: speed
+            vector: vector
         )
     }
 
@@ -69,7 +65,6 @@ public struct ParticleView<CustomParticle: View>: View {
                     }
                 )
                 .onChange(of: vector, restartAnimationFromCurrentPosition)
-                .onChange(of: speed, restartAnimationFromCurrentPosition)
                 .onChange(of: context.date) {
                     if let position = calculateCurrentPosition() {
                         self.onPositionChanged?(position)
@@ -97,15 +92,14 @@ public struct ParticleView<CustomParticle: View>: View {
         self.animationPhases = .init(
             inFrame: boundingArea,
             from: startPosition,
-            vector: vector,
-            speed: speed
+            vector: vector
         )
         self.id = UUID()
     }
 }
 
 extension Array where Element == AnimationPhase {
-    fileprivate init(inFrame area: CGRect, from startPosition: CGPoint, vector: CGVector, speed: Double) {
+    fileprivate init(inFrame area: CGRect, from startPosition: CGPoint, vector: CGVector) {
         let endPosition = Geometry.intersectionPoint(
             in: area,
             from: startPosition,
@@ -119,11 +113,13 @@ extension Array where Element == AnimationPhase {
 
         let distanceToStart = Geometry.calculateDistance(a: respawnPosition, b: startPosition)
         let distanceToEnd = Geometry.calculateDistance(a: startPosition, b: endPosition)
+        let durationToStart = vector.magnitude > 0 ? distanceToStart / vector.magnitude : 0 // Avoid division by 0
+        let durationToEnd = vector.magnitude > 0 ? distanceToEnd / vector.magnitude : 0 // Avoid division by 0
 
         self.init(
             [
-                .init(destination: startPosition, origin: respawnPosition, duration: distanceToStart / speed),
-                .init(destination: endPosition, origin: startPosition, duration: distanceToEnd / speed),
+                .init(destination: startPosition, origin: respawnPosition, duration: durationToStart),
+                .init(destination: endPosition, origin: startPosition, duration: durationToEnd),
                 .init(destination: respawnPosition, origin: endPosition, duration: 0),
             ]
         )

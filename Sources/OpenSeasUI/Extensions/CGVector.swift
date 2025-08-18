@@ -24,4 +24,12 @@ public extension CGVector {
 
         return Angle(radians: radians)
     }
+
+    var magnitude: CGFloat {
+        hypot(self.dx, self.dy)
+    }
+
+    func scaled(by factor: CGFloat) -> CGVector {
+        CGVector(dx: self.dx * factor, dy: self.dy * factor)
+    }
 }
