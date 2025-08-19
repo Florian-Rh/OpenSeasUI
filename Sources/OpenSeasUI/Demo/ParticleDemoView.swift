@@ -165,15 +165,12 @@ struct ParticleDemoView: View {
     }
 
     private func calculateParticleLocations(inFrame frame: CGRect) {
-//        var randomNumberGenerator = SeededRandomNumberGenerator(seed: self.seed)
+        var randomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
         self.particles = []
         for index in 0..<numberOfParticles {
-            let x: CGFloat = CGFloat.random(in: 0...2)
-            let y: CGFloat = CGFloat.random(in: 0...2)
-
             self.particles.append(
                 Particle(
-                    startPosition: .init(x: frame.midX * x, y: frame.midY * y),
+                    startPosition: .random(in: frame, using: &randomNumberGenerator),
                     id: index
                 )
             )
