@@ -17,7 +17,7 @@ public struct ParticleView<CustomParticle: View>: View {
     private let positionUpdateInterval: TimeInterval
     private let boundingArea: CGRect
     private let vector: CGVector
-    private let onPositionChanged: ((CGPoint) -> Void)?
+    private let onPositionUpdated: ((CGPoint) -> Void)?
     @ViewBuilder private let customParticleView: CustomParticle
     @State private var currentPhase: AnimationPhase?
     @State private var animationStartTime: Date?
@@ -29,7 +29,7 @@ public struct ParticleView<CustomParticle: View>: View {
         startPosition: CGPoint,
         inFrame area: CGRect,
         vector: CGVector,
-        onPositionChanged: ((CGPoint) -> Void)? = nil,
+        onPositionUpdated: ((CGPoint) -> Void)? = nil,
         positionUpdateInterval: TimeInterval = 1,
         @ViewBuilder customParticleView: () -> CustomParticle
     ) {
@@ -38,7 +38,7 @@ public struct ParticleView<CustomParticle: View>: View {
         self.vector = vector
         self.customParticleView = customParticleView()
 
-        self.onPositionChanged = onPositionChanged
+        self.onPositionUpdated = onPositionUpdated
 
         self.animationPhases = .init(
             inFrame: area,
@@ -67,7 +67,7 @@ public struct ParticleView<CustomParticle: View>: View {
                 .onChange(of: vector, restartAnimationFromCurrentPosition)
                 .onChange(of: context.date) {
                     if let position = calculateCurrentPosition() {
-                        self.onPositionChanged?(position)
+                        self.onPositionUpdated?(position)
                     }
                 }
                 .id(id)
