@@ -14,13 +14,14 @@ struct ParticleDemoView: View {
     }
     @State private var particles: [Particle] = []
     @State private var showControls = true
-    @State private var speed: Double = 20.0
+    @State private var speed: Double = 100.0
     @State private var randomAngle = false
-    @State private var selectedAngle: Angle = .degrees(0)
-    @State private var numberOfParticles: Int = 100
+    @State private var selectedAngle: Angle = .degrees(135)
+    @State private var numberOfParticles: Int = 1
     @State private var randomColor = false
     @State private var selectedColor: Color = .white
     @State private var selectedShape: ParticleShape = .circle
+    @State var vector = CGVector(from: .degrees(135)).scaled(by: 100)
 
     private enum ParticleShape {
         case circle
@@ -56,7 +57,10 @@ struct ParticleDemoView: View {
                     ParticleView(
                         startPosition: particle.startPosition,
                         inFrame: proxy.frame(in: .local),
-                        vector: .init(from: angle).scaled(by: speed)
+                        vector: $vector,
+                        frameHitBehavior: .disappear.onFrameHit { point in
+                            print("Frame hit at: \(point)")
+                        }
                     ) {
                         switch selectedShape {
                             case .circle:
@@ -103,6 +107,9 @@ struct ParticleDemoView: View {
                                 minimumValueLabel: { Text("0,0") },
                                 maximumValueLabel: { Text("1000,0")}
                             )
+                            .onChange(of: speed) {
+                                vector = .init(from: vector.angle).scaled(by: speed)
+                            }
 
                             Toggle("Random direction for each particle", isOn: $randomAngle)
                             if !randomAngle {
@@ -114,6 +121,9 @@ struct ParticleDemoView: View {
                                     minimumValueLabel: { Text("0") },
                                     maximumValueLabel: { Text("360")}
                                 )
+                                .onChange(of: selectedAngle) {
+                                    vector = .init(from: selectedAngle).scaled(by: vector.magnitude)
+                                }
                             }
 
                             Text("Number of particles: \(numberOfParticles)")
@@ -135,7 +145,7 @@ struct ParticleDemoView: View {
                             if !randomColor {
                                 ColorPicker("Particle color", selection: $selectedColor)
                             }
-#endif
+#endif // !os(watchOS)
 
                             Text("Shape")
                             Picker("", selection: $selectedShape) {
@@ -165,7 +175,7 @@ struct ParticleDemoView: View {
     }
 
     private func calculateParticleLocations(inFrame frame: CGRect) {
-        var randomNumberGenerator = SeededRandomNumberGenerator(seed: 1)
+        var randomNumberGenerator = SeededRandomNumberGenerator(seed: 5)
         self.particles = []
         for index in 0..<numberOfParticles {
             self.particles.append(

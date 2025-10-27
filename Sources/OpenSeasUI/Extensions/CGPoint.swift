@@ -21,4 +21,11 @@ extension CGPoint {
             y: CGFloat.random(in: frame.minY...frame.maxY, using: &generator)
         )
     }
+
+    public func overlaps(with other: CGPoint, withinMargin margin: Double = 1.0) -> Bool {
+        let xMatches = abs(self.x - other.x) < margin
+        let yMatches = abs(self.y - other.y) < margin
+
+        return xMatches && yMatches
+    }
 }

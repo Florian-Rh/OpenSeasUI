@@ -7,70 +7,136 @@
 
 import SwiftUI
 
-fileprivate struct AnimationPhase: Equatable {
+private struct AnimationPhase: Equatable {
+    enum Phase {
+        case start, end, respawn
+    }
     let destination: CGPoint
     let origin: CGPoint
     let duration: Double
+    let phase: Phase
+}
+
+public struct FrameHitBehavior {
+    enum Behavior {
+        case wrapAround
+        case bounceOff
+        case disappear
+    }
+
+    internal let behavior: Behavior
+    internal private(set) var onFrameHit: ((CGPoint) -> Void)?
+
+    public static var wrapAround: FrameHitBehavior {
+        .init(behavior: .wrapAround, onFrameHit: nil)
+    }
+
+    public static var bounceOff: FrameHitBehavior {
+        .init(behavior: .bounceOff, onFrameHit: nil)
+    }
+
+    public static var disappear: FrameHitBehavior {
+        .init(behavior: .disappear, onFrameHit: nil)
+    }
+
+    private init(behavior: Behavior, onFrameHit: ((CGPoint) -> Void)?) {
+        self.behavior = behavior
+        self.onFrameHit = onFrameHit
+    }
+
+    public func onFrameHit(execute closure: @escaping (CGPoint) -> Void) -> FrameHitBehavior {
+        .init(behavior: self.behavior, onFrameHit: closure)
+    }
 }
 
 public struct ParticleView<CustomParticle: View>: View {
-    private let positionUpdateInterval: TimeInterval
+    // MARK: - Arguments
+    private let startPosition: CGPoint
     private let boundingArea: CGRect
-    private let vector: CGVector
+    @Binding private var vector: CGVector
+    private let frameHitBehavior: FrameHitBehavior
     private let onPositionUpdated: ((CGPoint) -> Void)?
+    private let positionUpdateInterval: TimeInterval
     @ViewBuilder private let customParticleView: CustomParticle
+
+    // MARK: - States
     @State private var currentPhase: AnimationPhase?
     @State private var animationStartTime: Date?
+    @State private var isVisible = true
     @State private var id = UUID()
-
     @State private var animationPhases: [AnimationPhase]
 
     public init(
         startPosition: CGPoint,
         inFrame area: CGRect,
-        vector: CGVector,
+        vector: Binding<CGVector>,
+        frameHitBehavior: FrameHitBehavior = .wrapAround,
         onPositionUpdated: ((CGPoint) -> Void)? = nil,
         positionUpdateInterval: TimeInterval = 1,
         @ViewBuilder customParticleView: () -> CustomParticle
     ) {
-        self.positionUpdateInterval = positionUpdateInterval
+        self.startPosition = startPosition
         self.boundingArea = area
-        self.vector = vector
-        self.customParticleView = customParticleView()
-
+        self._vector = vector
+        self.frameHitBehavior = frameHitBehavior
         self.onPositionUpdated = onPositionUpdated
+        self.positionUpdateInterval = positionUpdateInterval
+        self.customParticleView = customParticleView()
 
         self.animationPhases = .init(
             inFrame: area,
             from: startPosition,
-            vector: vector
+            vector: vector.wrappedValue,
+            frameHitBehavior: frameHitBehavior
         )
     }
 
     public var body: some View {
-        TimelineView(.animation(minimumInterval: positionUpdateInterval)) { context in
-            self.customParticleView
-                .phaseAnimator(
-                    self.animationPhases,
-                    content: { view, phase in
-                        view
-                            .position(phase.destination)
-                            .onChange(of: phase) {
-                                self.animationStartTime = Date()
-                                self.currentPhase = phase
-                            }
-                    },
-                    animation: { phase in
-                        .linear(duration: phase.duration)
+        if isVisible {
+            TimelineView(.animation(minimumInterval: positionUpdateInterval)) { context in
+                self.customParticleView
+                    .phaseAnimator(
+                        self.animationPhases,
+                        content: { view, phase in
+                            view
+                                .position(phase.destination)
+                                .onChange(of: phase) { oldValue, newValue in
+                                    if case .end = oldValue.phase {
+                                        switch frameHitBehavior.behavior {
+                                        case .wrapAround:
+                                            break
+                                        case .bounceOff:
+                                            vector.bounce(
+                                                off: self.boundingArea,
+                                                at: oldValue.destination
+                                            )
+                                            restartAnimationFromCurrentPosition()
+                                        case .disappear:
+                                            isVisible = false
+                                        }
+                                        if let onFrameHit = frameHitBehavior.onFrameHit {
+                                            onFrameHit(phase.origin)
+                                        }
+                                    }
+
+                                    self.animationStartTime = Date()
+                                    self.currentPhase = phase
+                                }
+                        },
+                        animation: { phase in
+                            .linear(duration: phase.duration)
+                        }
+                    )
+                    .onChange(of: vector, restartAnimationFromCurrentPosition)
+                    .onChange(of: context.date) {
+                        if let position = calculateCurrentPosition() {
+                            self.onPositionUpdated?(position)
+                        }
                     }
-                )
-                .onChange(of: vector, restartAnimationFromCurrentPosition)
-                .onChange(of: context.date) {
-                    if let position = calculateCurrentPosition() {
-                        self.onPositionUpdated?(position)
-                    }
-                }
-                .id(id)
+                    .id(id)
+            }
+        } else {
+            EmptyView()
         }
     }
 
@@ -92,14 +158,20 @@ public struct ParticleView<CustomParticle: View>: View {
         self.animationPhases = .init(
             inFrame: boundingArea,
             from: startPosition,
-            vector: vector
+            vector: vector,
+            frameHitBehavior: frameHitBehavior
         )
         self.id = UUID()
     }
 }
 
 extension Array where Element == AnimationPhase {
-    fileprivate init(inFrame area: CGRect, from startPosition: CGPoint, vector: CGVector) {
+    fileprivate init(
+        inFrame area: CGRect,
+        from startPosition: CGPoint,
+        vector: CGVector,
+        frameHitBehavior: FrameHitBehavior
+    ) {
         let endPosition = Geometry.intersectionPoint(
             in: area,
             from: startPosition,
@@ -111,17 +183,67 @@ extension Array where Element == AnimationPhase {
             direction: vector.inverted
         )
 
-        let distanceToStart = Geometry.calculateDistance(a: respawnPosition, b: startPosition)
-        let distanceToEnd = Geometry.calculateDistance(a: startPosition, b: endPosition)
-        let durationToStart = vector.magnitude > 0 ? distanceToStart / vector.magnitude : 0 // Avoid division by 0
-        let durationToEnd = vector.magnitude > 0 ? distanceToEnd / vector.magnitude : 0 // Avoid division by 0
-
-        self.init(
-            [
-                .init(destination: startPosition, origin: respawnPosition, duration: durationToStart),
-                .init(destination: endPosition, origin: startPosition, duration: durationToEnd),
-                .init(destination: respawnPosition, origin: endPosition, duration: 0),
-            ]
+        let distanceToStart = Geometry.calculateDistance(
+            a: respawnPosition,
+            b: startPosition
         )
+        let distanceToEnd = Geometry.calculateDistance(
+            a: startPosition,
+            b: endPosition
+        )
+        let durationToStart =
+            vector.magnitude > 0 ? distanceToStart / vector.magnitude : 0
+        let durationToEnd =
+            vector.magnitude > 0 ? distanceToEnd / vector.magnitude : 0
+
+        let phases: [AnimationPhase] = [
+            .init(
+                destination: startPosition,
+                origin: respawnPosition,
+                duration: durationToStart,
+                phase: .start
+            ),
+            .init(
+                destination: endPosition,
+                origin: startPosition,
+                duration: durationToEnd,
+                phase: .end
+            ),
+            .init(
+                destination: respawnPosition,
+                origin: endPosition,
+                duration: 0,
+                phase: .respawn
+            ),
+        ]
+
+        self.init(phases)
     }
 }
+
+#Preview {
+
+    @Previewable @State var vector = CGVector(dx: 1.0, dy: 1.5).scaled(by: 100)
+    @Previewable @State var proxyPosition = CGPoint(x: 50, y: 50)
+
+    ZStack {
+        GeometryReader { reader in
+            Color.black
+            ParticleView(
+                startPosition: .init(x: 50, y: 50),
+                inFrame: reader.frame(in: .local),
+                vector: $vector,
+                frameHitBehavior: .bounceOff.onFrameHit { point in
+                    print("Hit at: \(point)")
+                },
+            ) {
+                Circle()
+                    .foregroundStyle(.white)
+                    .frame(width: 5, height: 5)
+            }
+        }
+        .frame(width: 100, height: 100)
+    }
+
+}
+

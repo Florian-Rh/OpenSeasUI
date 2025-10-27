@@ -111,7 +111,11 @@ struct SpaceFlightDemoView: View {
                     ParticleView(
                         startPosition: star.startPosition,
                         inFrame: proxy.frame(in: .local),
-                        vector: .init(from: direction).inverted.scaled(by: speed)
+                        vector: Binding(
+                            get: { .init(from: direction).inverted.scaled(by: speed) },
+                            set: { _ in }
+                        ),
+                        frameHitBehavior: .wrapAround
                     ) {
                         Circle()
                             .frame(width: 2, height: 2)
@@ -120,7 +124,11 @@ struct SpaceFlightDemoView: View {
                     ParticleView(
                         startPosition: star.startPosition,
                         inFrame: proxy.frame(in: .local),
-                        vector: .init(from: direction).inverted.scaled(by: speed)
+                        vector: Binding(
+                            get: { .init(from: direction).inverted.scaled(by: speed) },
+                            set: { _ in }
+                        ),
+                        frameHitBehavior: .wrapAround
                     ) {
                         Circle()
                             .frame(width: 2, height: 2)
