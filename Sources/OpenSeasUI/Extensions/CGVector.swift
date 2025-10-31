@@ -33,6 +33,11 @@ extension CGVector {
         CGVector(dx: self.dx * factor, dy: self.dy * factor)
     }
 
+    public mutating func scale(by factor: CGFloat) {
+        self.dx *= factor
+        self.dy *= factor
+    }
+
     public mutating func bounce(off frame: CGRect, at point: CGPoint) {
         let margin = 0.1
         if abs(point.y - frame.minY) < margin || abs(point.y - frame.maxY) < margin {

@@ -58,8 +58,8 @@ struct ParticleDemoView: View {
                         startPosition: particle.startPosition,
                         inFrame: proxy.frame(in: .local),
                         vector: $vector,
-                        frameHitBehavior: .disappear.onFrameHit { point in
-                            print("Frame hit at: \(point)")
+                        frameHitBehavior: .disappear.onFrameHit { point, edge in
+                            print("Frame hit at: \(point), \(edge)")
                         }
                     ) {
                         switch selectedShape {

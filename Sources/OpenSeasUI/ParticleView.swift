@@ -25,7 +25,7 @@ public struct FrameHitBehavior {
     }
 
     internal let behavior: Behavior
-    internal private(set) var onFrameHit: ((CGPoint) -> Void)?
+    internal private(set) var onFrameHit: ((CGPoint, Edge) -> Void)?
 
     public static var wrapAround: FrameHitBehavior {
         .init(behavior: .wrapAround, onFrameHit: nil)
@@ -39,12 +39,14 @@ public struct FrameHitBehavior {
         .init(behavior: .disappear, onFrameHit: nil)
     }
 
-    private init(behavior: Behavior, onFrameHit: ((CGPoint) -> Void)?) {
+    private init(behavior: Behavior, onFrameHit: ((CGPoint, Edge) -> Void)?) {
         self.behavior = behavior
         self.onFrameHit = onFrameHit
     }
 
-    public func onFrameHit(execute closure: @escaping (CGPoint) -> Void) -> FrameHitBehavior {
+    public func onFrameHit(
+        execute closure: @escaping (CGPoint, Edge) -> Void
+    ) -> FrameHitBehavior {
         .init(behavior: self.behavior, onFrameHit: closure)
     }
 }
@@ -115,7 +117,18 @@ public struct ParticleView<CustomParticle: View>: View {
                                             isVisible = false
                                         }
                                         if let onFrameHit = frameHitBehavior.onFrameHit {
-                                            onFrameHit(phase.origin)
+                                            let distanceToEdges = [
+                                                (abs(phase.origin.x - boundingArea.minX), Edge.leading),
+                                                (abs(phase.origin.x - boundingArea.maxX), Edge.trailing),
+                                                (abs(phase.origin.y - boundingArea.minY), Edge.top),
+                                                (abs(phase.origin.y - boundingArea.maxY), Edge.bottom),
+                                            ]
+
+                                            let edge: Edge = distanceToEdges
+                                                .min(by: { $0.0 < $1.0 })
+                                                .map(\.1)!
+
+                                            onFrameHit(phase.origin, edge)
                                         }
                                     }
 
@@ -221,29 +234,49 @@ extension Array where Element == AnimationPhase {
     }
 }
 
-#Preview {
 
-    @Previewable @State var vector = CGVector(dx: 1.0, dy: 1.5).scaled(by: 100)
-    @Previewable @State var proxyPosition = CGPoint(x: 50, y: 50)
+struct PreviewView: View {
+    @State var vector = CGVector(dx: 1.0, dy: 1.3).scaled(by: 100)
+    @State var startPosition = CGPoint(x: 50, y: 50)
+    @State var id = UUID()
 
-    ZStack {
-        GeometryReader { reader in
-            Color.black
-            ParticleView(
-                startPosition: .init(x: 50, y: 50),
-                inFrame: reader.frame(in: .local),
-                vector: $vector,
-                frameHitBehavior: .bounceOff.onFrameHit { point in
-                    print("Hit at: \(point)")
-                },
-            ) {
-                Circle()
-                    .foregroundStyle(.white)
-                    .frame(width: 5, height: 5)
+    var body: some View {
+        ZStack {
+            GeometryReader { reader in
+                Color.black
+                ParticleView(
+                    startPosition: startPosition,
+                    inFrame: reader.frame(in: .local),
+                    vector: $vector,
+                    frameHitBehavior: .bounceOff.onFrameHit { point, edge in
+                        if edge == .leading {
+                            print("leading edge hit, teleporting ")
+                            startPosition = .init(x: reader.frame(in: .local).maxX, y: point.y)
+                            vector.dx *= -1
+                            id = UUID()
+                        }
+
+                        if edge == .trailing {
+                            print("trailing edge hit, teleporting ")
+                            startPosition = .init(x: reader.frame(in: .local).minX, y: point.y)
+                            vector.dx *= -1
+                            id = UUID()
+                        }
+                    },
+                    positionUpdateInterval: 0.2
+                ) {
+                    Circle()
+                        .foregroundStyle(.white)
+                        .frame(width: 15, height: 15)
+                }
+                .id(id)
             }
+            .frame(width: 300, height: 300)
         }
-        .frame(width: 100, height: 100)
     }
+}
 
+#Preview {
+    PreviewView()
 }
 
