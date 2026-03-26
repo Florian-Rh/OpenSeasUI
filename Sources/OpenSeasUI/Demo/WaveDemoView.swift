@@ -6,7 +6,9 @@
 //
 
 import SwiftUI
+#if canImport(CoreMotion)
 import CoreMotion
+#endif
 
 internal struct WaveDemoView: View {
     @State private var waveAmplitude: CGFloat = 10.0
@@ -14,7 +16,9 @@ internal struct WaveDemoView: View {
     @State private var waveLength: CGFloat = 0.25
     @State private var waterLevel: CGFloat = 0.50
     @State private var rotation: CGFloat = 0.0
+    #if canImport(CoreMotion) && !os(macOS)
     @State private var clipToDeviceRotation: Bool = false
+    #endif
     @State private var distance: Int = 1
     @State private var animationBehavior: WaveView.AnimationBahaviour = .continuous(duration: 1.0)
     @State private var showControls = false
@@ -22,15 +26,16 @@ internal struct WaveDemoView: View {
     // The id is used to enfore re-rendering the wave views after the animation is changed
     @State private var id = UUID()
 
+    #if canImport(CoreMotion) && !os(macOS)
     private let motionManager = CMMotionManager()
+    #endif
 
     private var pickerStyle: some PickerStyle {
-#if os(watchOS)
+#if os(watchOS) || os(tvOS)
         return .automatic
 #else
         return .segmented
 #endif
-
     }
 
     internal var body: some View {
@@ -88,6 +93,7 @@ internal struct WaveDemoView: View {
                 }
                 if showControls {
                     ScrollView {
+#if !os(tvOS)
                         Text("Amplitude: \(waveAmplitude, specifier: "%.1F")")
                         Slider(
                             value: $waveAmplitude,
@@ -120,6 +126,8 @@ internal struct WaveDemoView: View {
                             minimumValueLabel: { Text("-1,0") },
                             maximumValueLabel: { Text("1,0")}
                         )
+#endif // !os(tvOS)
+                        #if canImport(CoreMotion) && !os(macOS)
                         Toggle("Clip to device rotation", isOn: $clipToDeviceRotation)
                             .onChange(of: clipToDeviceRotation) { _, _ in
                                 if clipToDeviceRotation {
@@ -128,6 +136,7 @@ internal struct WaveDemoView: View {
                                     self.stopDeviceMotionUpdates()
                                 }
                             }
+                        #endif
 
                         Text("Animation behavior")
                         Picker("", selection: $animationBehavior) {
@@ -148,6 +157,7 @@ internal struct WaveDemoView: View {
                             id = UUID()
                         }
 
+#if !os(tvOS)
                         if case .backAndForth(_, _) = animationBehavior {
                             Stepper("Distance: \(distance)", value: $distance, in: 1...10)
                                 .onChange(of: distance) { _, _ in
@@ -177,6 +187,7 @@ internal struct WaveDemoView: View {
                                 id = UUID()
                             }
                         }
+#endif // !os(tvOS)
                     }
                 }
             }
@@ -201,6 +212,7 @@ internal struct WaveDemoView: View {
         }
     }
 
+    #if canImport(CoreMotion) && !os(macOS)
     private func startDeviceMotionUpdates() {
         self.motionManager.deviceMotionUpdateInterval = 0.01
         self.motionManager.startDeviceMotionUpdates(to: .main) { motion, _ in
@@ -213,6 +225,7 @@ internal struct WaveDemoView: View {
     private func stopDeviceMotionUpdates() {
         self.motionManager.stopDeviceMotionUpdates()
     }
+    #endif
 }
 
 #Preview {

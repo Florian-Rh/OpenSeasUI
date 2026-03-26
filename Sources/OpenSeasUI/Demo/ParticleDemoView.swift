@@ -39,7 +39,7 @@ struct ParticleDemoView: View {
     ]
 
     private var pickerStyle: some PickerStyle {
-#if os(watchOS)
+#if os(watchOS) || os(tvOS)
         return .automatic
 #else
         return .segmented
@@ -99,6 +99,7 @@ struct ParticleDemoView: View {
                     }
                     if showControls {
 //                        ScrollView {
+#if !os(tvOS)
                             Text("Speed: \(speed, specifier: "%.1F")")
                             Slider(
                                 value: $speed,
@@ -125,6 +126,7 @@ struct ParticleDemoView: View {
                                     vector = .init(from: selectedAngle).scaled(by: vector.magnitude)
                                 }
                             }
+#endif // !os(tvOS)
 
                             Text("Number of particles: \(numberOfParticles)")
                             Picker("", selection: $numberOfParticles) {
@@ -140,12 +142,12 @@ struct ParticleDemoView: View {
                                 )
                             }
 
-#if !os(watchOS)
+#if !os(watchOS) && !os(tvOS)
                             Toggle("Random OpenSeasUI Color", isOn: $randomColor)
                             if !randomColor {
                                 ColorPicker("Particle color", selection: $selectedColor)
                             }
-#endif // !os(watchOS)
+#endif // !os(watchOS) && !os(tvOS)
 
                             Text("Shape")
                             Picker("", selection: $selectedShape) {

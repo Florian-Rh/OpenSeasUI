@@ -180,6 +180,7 @@ struct SpaceFlightDemoView: View {
                             .opacity(joystickState.tutorialGuideOpacity)
 
                         // Transparent overlay for drag gesture
+#if !os(tvOS)
                         Color.clear
                             .contentShape(Rectangle())
                             .gesture(
@@ -201,6 +202,7 @@ struct SpaceFlightDemoView: View {
                                         self.joystickState = .idle
                                     }
                             )
+#endif // !os(tvOS)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
